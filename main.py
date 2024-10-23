@@ -28,7 +28,7 @@ wlan.connect(secrets.ssid, secrets.password)
 statetimer = machine.Timer()
 currentLogTimer = machine.Timer()
 # Globals
-cooling = False #Cooling State has no pin differences from off
+state = 'off' # off / filling / heat / cool / flush / quickdrain
 flush_count = 4 #Zero means flush done
 baseline = 350_000 # Inital state for baseline IIR Value for touch detection (350_000, connected, 4_000 bare PCB)
 touch_threshold = 4_000_000 #Threshold above baseline for a touch (4_000_000, connected, 4_000 bare PCB)
@@ -115,64 +115,74 @@ def is_drain_open():
 
 # State Functions
 def goFlush(callingtimer):
-    global flush_count
-    logWifi(f"Flush Cycle: {flush_count}")
+    global flush_count, state
+    state = 'flush'
     fill_open() #Start Filling
     if is_drain_open(): #We are not draining
          drain_open() #Start Draining
+         logWifi(f"Flush Drain Cycle: {flush_count}")
     else:
         drain_closed() #Stop Draining
         flush_count -= 1 # Done with this flush round
+        logWifi(f"Flush Fill Cycle: {flush_count}")
     if flush_count > 0: #More flushes to go, recursive
         statetimer.init(mode=machine.Timer.ONE_SHOT,period=300_000,callback=goFlush) # Cycle the Flush 5 mins (300_000)
     else:
-        logWifi("Final Drain Cycle")
+        logWifi("Final Long Drain Cycle")
         drain_open() #Start Draining
         fill_closed()   # Stop Filling
         statetimer.init(mode=machine.Timer.ONE_SHOT,period=3_600_000,callback=goOff) # Final Drain Cycle 60 mins (3_600_000)
              
 def goHeat(callingtimer):
-    global cooling, flush_count
+    global state
+    state = 'heat'
     ledOn() #Turn on LED
     fill_open() #Keep Filling
     heat_on() # Start Heat
     drain_closed() # Stop Drain
-    cooling = False
-    flush_count = 4 #Queue up some flushing
     statetimer.init(mode=machine.Timer.ONE_SHOT,period=900_000,callback=goCool) # Auto Off Timer 15 mins (900_000)
     logWifi('Heat State')
 
 def goCool(callingtimer):
-    global cooling, flush_count
+    global flush_count, state
+    state = 'cool'
     ledOff()
     fill_closed()   # Stop Filling
     heat_off() # Stop Heat
     drain_closed() # Stop Drain
-    cooling = True
     flush_count = 4 #Queue up some flushing
     statetimer.init(mode=machine.Timer.ONE_SHOT,period=1_800_000,callback=goFlush) # Cooling Timer 30 mins (1_800_000)
     logWifi('Cool State')
     
 def goFill(callingtimer):
-    global cooling, flush_count
+    global state
+    state = 'filling'
     ledOn() #Turn on LED
     fill_open() #Start Filling
     heat_off() # Stop Heat
     drain_closed() # Stop Drain
-    cooling = False
-    flush_count = 4 #Queue up some flushing
-    statetimer.init(mode=machine.Timer.ONE_SHOT,period=10_000,callback=goHeat) # Fill Timer, 10s (10_000)
+    statetimer.init(mode=machine.Timer.ONE_SHOT,period=20_000,callback=goHeat) # Fill Timer, 20s (20_000)
     logWifi('Fill State')
    
 def goOff(callingtimer):
-    global cooling, flush_count
+    global state
+    state = 'off'
     ledOff() #Turn off LED
     fill_closed()   # Stop Filling
     heat_off() # Stop Heat
     drain_closed() # Stop Drain
-    cooling = False
-    flush_count = 4 #Queue up some flushing
+    statetimer.deinit()
     logWifi('Off State')
+
+def goQuickDrain(callingtimer):
+    global state
+    state = 'quickdrain'
+    ledOff() #Turn off LED
+    fill_closed()   # Stop Filling
+    heat_off() # Stop Heat
+    drain_open() #Start Draining
+    statetimer.init(mode=machine.Timer.ONE_SHOT,period=600_000,callback=goOff) # Final Drain Cycle 10 mins (600_000)
+    logWifi('Quick Drain')
     
 def printTouchStatus():
     global max, baseline, last_status
@@ -213,18 +223,23 @@ wled.value(0)
 shower_led.value(0)
 last_touch = time.ticks_ms() # Limit immediate and back-to-back touch detections (debounce)
 last_status = last_touch
+currentLogTimer.init(mode=machine.Timer.PERIODIC,period=10_000,callback=logCurrent) # DELETE ME, just for testing
 while True: #Main loop
     curval = 4_294_967_295 - sm.get() #State Machine counts down from 2^32
     if time.ticks_diff(time.ticks_ms(), last_touch) > time_between_touches_ms: #Not a multi-touch event 
         if curval > baseline + touch_threshold: #We have a touch event
-            last_touch = time.ticks_ms()
-            if is_heat_off() and is_fill_off(): #We are off
-                if cooling: #If cooling, we are full, Go directly to heat
-                    goHeat(0)
-                else:  #Not cooling, we are empty, Go to fill
-                    goFill(0)
-            else: #If heat or filling, we are on, so go to cool
+            last_touch = time.ticks_ms() #States are: off / filling / heat / cool / flush
+            if state == 'off' or state == 'flush'  or state == 'quickdrain':
+                goFill(0)
+            elif state == 'heat':
                 goCool(0)
+            elif state == 'filling':
+                goQuickDrain(0) # Someone shut us off before full
+            elif state == 'cool':
+                goHeat(0)
+            else:
+                goCool(0)
+                logWifi("Uh Oh, we fell though the state if")
             printTouchStatus()
             logWifi(f"Press at: {round(curval - baseline)}")
         else: #Only start taking button stats after the touch event has passed
