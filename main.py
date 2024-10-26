@@ -20,10 +20,6 @@ wled.value(1)
 shower_led.value(1)
 # WLAN Setup
 wlan = network.WLAN(network.STA_IF)
-wlan.disconnect()
-wlan.active(False)
-wlan.active(True)
-wlan.connect(secrets.ssid, secrets.password)
 # Timers
 statetimer = machine.Timer()
 currentLogTimer = machine.Timer()
@@ -31,11 +27,11 @@ currentLogTimer = machine.Timer()
 state = 'off' # off / filling / heat / cool / flush / quickdrain
 flush_count = 4 #Zero means flush done
 baseline = 350_000 # Inital state for baseline IIR Value for touch detection (350_000, connected, 4_000 bare PCB)
-touch_threshold = 4_000_000 #Threshold above baseline for a touch (4_000_000, connected, 4_000 bare PCB)
+touch_threshold = 4_000 #Threshold above baseline for a touch (4_000_000, connected, 4_000 bare PCB)
 time_between_touches_ms = 1000 #Debounce time for a touch
 current_raw = 0 #Inital State for current IIR
 DATA_IIR_CONST = 1000  # Filtering constant for the IIR filters
-time_between_status_ms = 1000 * 60 * 120 # How often to log status
+time_between_status_ms = 1000 * 60 * 240 # How often to log status
 max = 0
 # Logging Function
 def logWifi(logmessage):
@@ -48,12 +44,12 @@ def logWifi(logmessage):
         except OSError as error:
             print(f'Connect error is {error}')
         except Exception as e:
-            print(f"An unkown error occurred: {e}")
+            print(f"An unkown connect error occurred: {e}")
             return
         print('Waiting for connection...')
         counter = 0
         while not wlan.isconnected():
-            wdt.feed()
+            #wdt.feed()
             time.sleep(1)
             print(counter, '.', sep='', end='')
             counter += 1
@@ -64,12 +60,12 @@ def logWifi(logmessage):
     try:
         res = requests.post(secrets.url, data = logmessage)
     except OSError: #Need to catch this or we stop
-        print("Post Error")
+        print("Log Failed, Post Error")
     except Exception as e:
-        print(f"An unkown error occurred: {e}")
+        print(f"An unkown post error occurred: {e}")
     else:
         if res.text != 'OK':
-            print('Unexpected Response:', res.text)
+            print('Unexpected Post Response:', res.text)
     
 # Helper functions to make code readable, and to add logging
 def logCurrent(callingtimer):
@@ -85,15 +81,11 @@ def ledOff():
 
 def heat_on():
     heater.value(0) #Turn on Heat, Active Low
-    logWifi('Heater On') # Log the measured current every min (60_000)
-    currentLogTimer.init(mode=machine.Timer.PERIODIC,period=60_000,callback=logCurrent)
+    #currentLogTimer.init(mode=machine.Timer.PERIODIC,period=60_000,callback=logCurrent)  #60_000
 
 def heat_off():
     heater.value(1) #Turn off Heat, Active Low
-    currentLogTimer.deinit() #No need to log anymore
-
-def is_heat_off():
-    return heater.value()
+    #currentLogTimer.deinit() #No need to log anymore
 
 def fill_open():
     fill.value(0) #Start Filling
@@ -126,12 +118,12 @@ def goFlush(callingtimer):
         flush_count -= 1 # Done with this flush round
         logWifi(f"Flush Fill Cycle: {flush_count}")
     if flush_count > 0: #More flushes to go, recursive
-        statetimer.init(mode=machine.Timer.ONE_SHOT,period=300_000,callback=goFlush) # Cycle the Flush 5 mins (300_000)
+        statetimer.init(mode=machine.Timer.ONE_SHOT,period=300_00,callback=goFlush) # Cycle the Flush 5 mins (300_000)
     else:
         logWifi("Final Long Drain Cycle")
         drain_open() #Start Draining
         fill_closed()   # Stop Filling
-        statetimer.init(mode=machine.Timer.ONE_SHOT,period=3_600_000,callback=goOff) # Final Drain Cycle 60 mins (3_600_000)
+        statetimer.init(mode=machine.Timer.ONE_SHOT,period=3_600_0,callback=goOff) # Final Drain Cycle 60 mins (3_600_000)
              
 def goHeat(callingtimer):
     global state
@@ -140,7 +132,7 @@ def goHeat(callingtimer):
     fill_open() #Keep Filling
     heat_on() # Start Heat
     drain_closed() # Stop Drain
-    statetimer.init(mode=machine.Timer.ONE_SHOT,period=900_000,callback=goCool) # Auto Off Timer 15 mins (900_000)
+    statetimer.init(mode=machine.Timer.ONE_SHOT,period=900_00,callback=goCool) # Auto Off Timer 15 mins (900_000)
     logWifi('Heat State')
 
 def goCool(callingtimer):
@@ -151,7 +143,7 @@ def goCool(callingtimer):
     heat_off() # Stop Heat
     drain_closed() # Stop Drain
     flush_count = 4 #Queue up some flushing
-    statetimer.init(mode=machine.Timer.ONE_SHOT,period=1_800_000,callback=goFlush) # Cooling Timer 30 mins (1_800_000)
+    statetimer.init(mode=machine.Timer.ONE_SHOT,period=1_800_00,callback=goFlush) # Cooling Timer 30 mins (1_800_000)
     logWifi('Cool State')
     
 def goFill(callingtimer):
@@ -181,7 +173,7 @@ def goQuickDrain(callingtimer):
     fill_closed()   # Stop Filling
     heat_off() # Stop Heat
     drain_open() #Start Draining
-    statetimer.init(mode=machine.Timer.ONE_SHOT,period=600_000,callback=goOff) # Final Drain Cycle 10 mins (600_000)
+    statetimer.init(mode=machine.Timer.ONE_SHOT,period=600_00,callback=goOff) # Final Drain Cycle 10 mins (600_000)
     logWifi('Quick Drain')
     
 def printTouchStatus():
@@ -217,8 +209,9 @@ sm.active(1)
 sm.put(1_250_000, 0)  #This sets Charging Delay and detection rate in SM clock cycles (10 ms)
 # Let us know were done booting
 # Start the Watchdog
-wdt = machine.WDT(timeout=5000)
-logWifi("Rebooted: v5 Long")
+#wdt = machine.WDT(timeout=5000)
+#wtd.feed()
+logWifi("Rebooted: v5 Testing")
 wled.value(0)
 shower_led.value(0)
 last_touch = time.ticks_ms() # Limit immediate and back-to-back touch detections (debounce)
@@ -229,7 +222,7 @@ while True: #Main loop
     if time.ticks_diff(time.ticks_ms(), last_touch) > time_between_touches_ms: #Not a multi-touch event 
         if curval > baseline + touch_threshold: #We have a touch event
             last_touch = time.ticks_ms() #States are: off / filling / heat / cool / flush
-            if state == 'off' or state == 'flush'  or state == 'quickdrain':
+            if state == 'off' or state == 'flush' or state == 'quickdrain':
                 goFill(0)
             elif state == 'heat':
                 goCool(0)
@@ -250,4 +243,4 @@ while True: #Main loop
     #print status on an interval
     if time.ticks_diff(time.ticks_ms(), last_status) > time_between_status_ms:
         printTouchStatus()       
-    wdt.feed()
+    #wdt.feed()

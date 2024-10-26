@@ -2,3 +2,5 @@ secrets.py
 .vscode
 .micropico
 build/*
+PCB/PCB-backups/*
+PCB/*.kicad_prl
