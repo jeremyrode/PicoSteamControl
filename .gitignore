@@ -4,3 +4,4 @@ secrets.py
 build/*
 PCB/PCB-backups/*
 PCB/*.kicad_prl
+/PCB/production
