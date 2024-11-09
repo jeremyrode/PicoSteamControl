@@ -258,6 +258,286 @@
 				)
 			)
 		)
+		(symbol "Connector:RJ25"
+			(pin_names
+				(offset 1.016)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(property "Reference" "J"
+				(at -5.08 11.43 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify right)
+				)
+			)
+			(property "Value" "RJ25"
+				(at 2.54 11.43 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0.635 90)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Datasheet" "~"
+				(at 0 0.635 90)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Description" "RJ connector, 6P6C (6 positions 6 connected)"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "ki_keywords" "6P6C RJ socket connector"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "ki_fp_filters" "6P6C* RJ12* RJ18* RJ25*"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(symbol "RJ25_0_1"
+				(polyline
+					(pts
+						(xy -6.35 -1.905) (xy -5.08 -1.905) (xy -5.08 -1.905)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -6.35 -0.635) (xy -5.08 -0.635) (xy -5.08 -0.635)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -6.35 0.635) (xy -5.08 0.635) (xy -5.08 0.635)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -6.35 1.905) (xy -5.08 1.905) (xy -5.08 1.905)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -6.35 3.175) (xy -5.08 3.175) (xy -5.08 3.175)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -5.08 4.445) (xy -6.35 4.445) (xy -6.35 4.445)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -6.35 -4.445) (xy -6.35 6.985) (xy 3.81 6.985) (xy 3.81 4.445) (xy 5.08 4.445) (xy 5.08 3.175)
+						(xy 6.35 3.175) (xy 6.35 -0.635) (xy 5.08 -0.635) (xy 5.08 -1.905) (xy 3.81 -1.905) (xy 3.81 -4.445)
+						(xy -6.35 -4.445) (xy -6.35 -4.445)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(rectangle
+					(start 7.62 10.16)
+					(end -7.62 -7.62)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type background)
+					)
+				)
+			)
+			(symbol "RJ25_1_1"
+				(pin passive line
+					(at 10.16 -5.08 180)
+					(length 2.54)
+					(name "~"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 10.16 -2.54 180)
+					(length 2.54)
+					(name "~"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 10.16 0 180)
+					(length 2.54)
+					(name "~"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "3"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 10.16 2.54 180)
+					(length 2.54)
+					(name "~"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "4"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 10.16 5.08 180)
+					(length 2.54)
+					(name "~"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "5"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 10.16 7.62 180)
+					(length 2.54)
+					(name "~"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "6"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+		)
 		(symbol "Connector:RJ45"
 			(pin_names
 				(offset 1.016)
@@ -2688,92 +2968,6 @@
 		(uuid "eef68d80-163c-40b6-8694-ae4035b643f8")
 	)
 	(symbol
-		(lib_id "Connector:RJ45")
-		(at 69.85 106.68 0)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "12ab4e8f-42c4-4a1b-ac3b-66e77641045f")
-		(property "Reference" "J1"
-			(at 69.85 90.17 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "RJ45"
-			(at 69.85 92.71 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" ""
-			(at 69.85 106.045 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" "~"
-			(at 69.85 106.045 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" ""
-			(at 69.85 106.68 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "1"
-			(uuid "26d10988-2e7c-4463-b589-ceef02a2adce")
-		)
-		(pin "2"
-			(uuid "026408a6-c561-4905-9b2e-5c13282a1b44")
-		)
-		(pin "3"
-			(uuid "d393e159-91ad-4a76-8b9b-d8d7e0d6150d")
-		)
-		(pin "4"
-			(uuid "1b3a3b2c-5e6c-4cc1-ae31-35e27939e78e")
-		)
-		(pin "5"
-			(uuid "3630e56c-1051-4cce-a060-c95ab6ab791b")
-		)
-		(pin "6"
-			(uuid "0a6a9e05-fcdb-4c48-aeec-97f3cc306213")
-		)
-		(pin "7"
-			(uuid "f23f29da-e540-4bbe-a2cf-468367e2fd15")
-		)
-		(pin "8"
-			(uuid "466174b2-c2f1-450e-9444-2fafe03e688a")
-		)
-		(instances
-			(project "PCB"
-				(path "/f15ea9ea-2417-4ede-b8fb-2c7cbeea71e8"
-					(reference "J1")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
 		(lib_id "Device:C")
 		(at 199.39 69.85 0)
 		(unit 1)
@@ -3680,6 +3874,86 @@
 		)
 	)
 	(symbol
+		(lib_id "Connector:RJ25")
+		(at 69.85 106.68 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "732449ce-445b-4f7c-a681-a6aabe78f86d")
+		(property "Reference" "J1"
+			(at 69.85 92.71 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "RJ25"
+			(at 69.85 95.25 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Connector_RJ:RJ25_Wayconn_MJEA-660X1_Horizontal"
+			(at 69.85 106.045 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 69.85 106.045 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" ""
+			(at 69.85 106.68 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "47d4c797-38a7-4658-8983-c1702842c231")
+		)
+		(pin "2"
+			(uuid "a12c3780-4b7f-4019-8811-d184e768ef49")
+		)
+		(pin "3"
+			(uuid "ff074306-6e19-45f0-8144-6855c1ed8290")
+		)
+		(pin "4"
+			(uuid "258bde57-afc6-4c8b-b098-7da2f4619ddd")
+		)
+		(pin "5"
+			(uuid "bd227cca-adee-494a-bf13-a5bb278bd387")
+		)
+		(pin "6"
+			(uuid "48a5def8-b73d-4af5-a066-a822217e8a99")
+		)
+		(instances
+			(project "Proto_Board_as_Built"
+				(path "/f15ea9ea-2417-4ede-b8fb-2c7cbeea71e8"
+					(reference "J1")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "Amplifier_Operational:LM358")
 		(at 232.41 54.61 0)
 		(unit 3)
@@ -4098,92 +4372,6 @@
 		)
 	)
 	(symbol
-		(lib_id "Connector:RJ45")
-		(at 69.85 106.68 0)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "8802b36f-e1f0-4583-ba9c-43adbe96e4f3")
-		(property "Reference" "J1"
-			(at 69.85 90.17 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "RJ45"
-			(at 69.85 92.71 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" ""
-			(at 69.85 106.045 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" "~"
-			(at 69.85 106.045 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" ""
-			(at 69.85 106.68 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "1"
-			(uuid "26d10988-2e7c-4463-b589-ceef02a2adcf")
-		)
-		(pin "2"
-			(uuid "026408a6-c561-4905-9b2e-5c13282a1b45")
-		)
-		(pin "3"
-			(uuid "d393e159-91ad-4a76-8b9b-d8d7e0d6150e")
-		)
-		(pin "4"
-			(uuid "1b3a3b2c-5e6c-4cc1-ae31-35e27939e78f")
-		)
-		(pin "5"
-			(uuid "3630e56c-1051-4cce-a060-c95ab6ab791c")
-		)
-		(pin "6"
-			(uuid "0a6a9e05-fcdb-4c48-aeec-97f3cc306214")
-		)
-		(pin "7"
-			(uuid "f23f29da-e540-4bbe-a2cf-468367e2fd16")
-		)
-		(pin "8"
-			(uuid "466174b2-c2f1-450e-9444-2fafe03e688b")
-		)
-		(instances
-			(project "PCB"
-				(path "/f15ea9ea-2417-4ede-b8fb-2c7cbeea71e8"
-					(reference "J1")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
 		(lib_id "Device:C")
 		(at 199.39 69.85 0)
 		(unit 1)
@@ -4316,92 +4504,6 @@
 			(project "PCB"
 				(path "/f15ea9ea-2417-4ede-b8fb-2c7cbeea71e8"
 					(reference "R4")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "Connector:RJ45")
-		(at 69.85 106.68 0)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "9a23e040-5137-48d7-8873-9f80be24a082")
-		(property "Reference" "J1"
-			(at 69.85 90.17 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "RJ45"
-			(at 69.85 92.71 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" ""
-			(at 69.85 106.045 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" "~"
-			(at 69.85 106.045 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" ""
-			(at 69.85 106.68 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "1"
-			(uuid "26d10988-2e7c-4463-b589-ceef02a2add0")
-		)
-		(pin "2"
-			(uuid "026408a6-c561-4905-9b2e-5c13282a1b46")
-		)
-		(pin "3"
-			(uuid "d393e159-91ad-4a76-8b9b-d8d7e0d6150f")
-		)
-		(pin "4"
-			(uuid "1b3a3b2c-5e6c-4cc1-ae31-35e27939e790")
-		)
-		(pin "5"
-			(uuid "3630e56c-1051-4cce-a060-c95ab6ab791d")
-		)
-		(pin "6"
-			(uuid "0a6a9e05-fcdb-4c48-aeec-97f3cc306215")
-		)
-		(pin "7"
-			(uuid "f23f29da-e540-4bbe-a2cf-468367e2fd17")
-		)
-		(pin "8"
-			(uuid "466174b2-c2f1-450e-9444-2fafe03e688c")
-		)
-		(instances
-			(project "PCB"
-				(path "/f15ea9ea-2417-4ede-b8fb-2c7cbeea71e8"
-					(reference "J1")
 					(unit 1)
 				)
 			)

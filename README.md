@@ -111,11 +111,18 @@ Here, I’ve tried to make an ideal diode based peak detector (with gain) out of
 
 # Schematic:
 
-The factory control board was replaced with a quad relay board from amazon, wired directly to a RJ45 (J2) breakout board from Spark Fun.  This relay board replaces the factory control board, and is wired into the 220V fill solenoid, drain valve, and the 50A heater contactor.  The factory touchpad with LED is wired to J1.
+The factory control board was replaced with a quad relay board from amazon, wired directly to a RJ45 (J2) breakout board from Spark Fun (Pins 8-3). This relay board replaces the factory control board, and is wired into the 220V fill solenoid, drain valve, and the 50A heater contactor.  The relay board is an active low (open collector) on pins 4-7, VCC on pin 4 and ground on pin 1.  I wired a 1600:1 50A Current Transformer (CT) to pins 1 and 2.
 
-Note that this is the schematic that I built on a proto board with parts on hand.  I would recommend a proper ground and changing J1 to a RJ12 if I build a PCB (which I have done in the PCB directory).
+The factory touchpad with LED is wired to J1.  From measuring with a meter, the power LED is on Pins 1 and 2 of the RJ12 connector (J1).  The capacitive touch sensor is on pin 4.  I think the ground shield of the cap sensor is on pin 3.
+
+Note that this is the schematic that I built on a proto board with parts on hand.  A PCB with a proper ground is in the PCB directory.
 
 ![Schematic](./PCB/protoschematic.png)
+
+The CT burden resistor (R5) is set at 30 Ohms.  The output voltage goes to an op-amp (U2A). Here U2A with feedback around a diode (D1) forms an ideal diode, with feedback though a voltage divider formed by R4/R3, here with a voltage gain of 3.2X.  A 1uF capacitor (C1) stores the peak voltage from the diode (an envelope detector), with a discharge time constant of ~32ms (1uF & 32k Ohms).  This voltage is converted by ADC0 of the Pico.
+
+The unused is set to an non-inverting amp of gain 1 to ground, [as per recommendation.]( https://www.ti.com/lit/ab/sboa204a/sboa204a.pdf)  Note that the op amp used here needs to be rated for a common-mode voltage at the bottom rail (here ground), but not the top rail, as there is headroom between the 3.3V maximum output and the 5V supply.  The [LM358 is rated for VCM down to V- but only to V+ - 2V.](https://www.ti.com/product/LM358#tech-docs)
+
 
 # Future Ideas
 - Higher touch threshold for on than off
