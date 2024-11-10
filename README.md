@@ -1,9 +1,9 @@
 ﻿# PicoSteamControl
-Pico control for a Leisure Steam One Touch LS series.
+This project implements a new Raspberry Pi Pico based control for a [Leisure Steam One Touch LS series steam generator](https://leisure-steam.com/product-category/steam-generators/1-touch-steam-unit/).
 
-The factory control PCB was misbehaving, so I thought it would be a good challenge to replace it with a Raspberry Pi Pico.
+The factory control PCB was misbehaving, and I have wanted to implement an automatic self-flush to clean the tank, so I thought it would be a good challenge to replace it with a Raspberry Pi Pico.
 
-This is my first MicroPython project.  I was originally implementing this system in C, but when I started down the path to connect to WiFi, I decided to try out MicroPython and I was blown away by the power and rapid development/test cycles.
+This is my first MicroPython project.  I was originally implementing this system in C, but when I started down the path to connect a Pico W to WiFi, I decided to try out MicroPython and I was blown away by the power and rapid development/test cycles.
 
 I mostly think this project might be interesting to people because of a few new ideas that I have not seen documented well in the wild:
 
@@ -26,7 +26,7 @@ def logWifi(logmessage):
     res = requests.post(secrets.url, data = logmessage)
 ```
 
-Remarkably simple and effective, this server could easily serve many Pico W boards. See main.py for the full code with WiFi reconnection, and error handling.  [The secrets.url uses a config file to not checkin WiFi passwords or local IPs to a public Git.]( https://www.coderdojotc.org/micropython/wireless/02-connecting-to-wifi/ "MicroPython WiFi Info")
+Remarkably simple and effective, this server could easily serve many Pico W boards. See main.py for the full code with WiFi reconnection, and error handling.  [The secrets.url uses a config file to not check in WiFi passwords or local IPs to a public Git.]( https://www.coderdojotc.org/micropython/wireless/02-connecting-to-wifi/ "MicroPython WiFi Info")
 
 The logWifi() function in main.py takes the log request and sends it to a http server (SteamLogger.js) running in Node.js that timestamps it and writes it to a file.
 
@@ -51,7 +51,7 @@ const server = http.createServer((req, res) => {
 
 ## Capacitive Touch Sensing via PIO State Machine
 
-After discovering that the control button on the LS1 one touch is a capacitive membrane switch, I investigated specific ICs that do capacitive touch sensing, but then this is a perfect task for a PIO state machine. It is very reliable and has very good dynamic range: Around 250K cycles for the untouched state, and with a strong push increasing this to 6-8M cycles.  A logging function serves to measure this. 
+After discovering that the control button on the LS1 one touch is a capacitive membrane switch, I investigated specific ICs that detect capacitive touch sensing, but this is a perfect task for a PIO state machine. This PIO-based detection ended up very reliable and has very good dynamic range: Around 250K cycles for the untouched state, and with a strong push increasing this to 6-8M cycles.  A logging function serves to quantify the reliability. 
 
 Here is a very unoptimized PIO state machine that charges a capacitive touch sensor via an output pin and a resistor, then cycle counts the time to discharge.
 [I’ve broke this out into its own repository]( https://github.com/jeremyrode/RaspPiPicoTouchSensor "RaspPiPicoTouchSensor Repo"), and I might try to optimize it eventually.
@@ -105,7 +105,7 @@ Here the python sets the discharge delay via sm.put().  An infinite loop pulls t
 
 ## New Ideal Diode Peak Detector CT Interface
 
-Interfacing to Current Transformers (CT) is a real pain; either one needs to bias the signal in the middle of the ADC range, and sample fast enough to capture the 60 Hz sine wave, or a diode peak detector can be used, but that makes the circuit non-linear when the signal from the CT is below the diode threshold voltage.
+Interfacing to Current Transformers (CT) is a real pain; either one needs to bias the signal in the middle of the ADC range, and sample fast enough to capture the 60 Hz sine wave, extracting the RMS, or a diode envelope detector can be used.  The simple diode envelope detector simplifies the ADC reading, as the output signal is DC, but the diode turn-on voltage makes the transfer function non-linear when the signal from the CT is below the diode turn-on voltage, making the current measurement inaccurate at low current.
 
 Here, I’ve tried to make an ideal diode based peak detector (with gain) out of a non-inverting op amp driving though a diode.  Ideally this should both make the ADC readout much simpler and more accurate, as the output is DC, and the time constant can be set via a capacitor, and make the CT more accurate as the burden resistor can be sized optimally for the CT, with the op-amp gain used to optimally fill the ADC range from the typically lower voltage from a CT in the linear regime.
 
@@ -119,7 +119,7 @@ Note that this is the schematic that I built on a proto board with parts on hand
 
 ![Schematic](./PCB/protoschematic.png)
 
-The CT burden resistor (R5) is set at 30 Ohms.  The output voltage goes to an op-amp (U2A). Here U2A with feedback around a diode (D1) forms an ideal diode, with feedback though a voltage divider formed by R4/R3, here with a voltage gain of 3.2X.  A 1uF capacitor (C1) stores the peak voltage from the diode (an envelope detector), with a discharge time constant of ~32ms (1uF & 32k Ohms).  This voltage is converted by ADC0 of the Pico.
+The CT burden resistor (R5) is set at 30 Ohms, calculated for good CT linearity.  The output voltage from the burdgen resistor goes to an op-amp (U2A). Here U2A with feedback around a diode (D1) forms an ideal diode, with feedback though a voltage divider formed by R4/R3, here with a voltage gain of 3.2X.  A 1uF capacitor (C1) stores the peak voltage from the diode (envelope detector), with a discharge time constant of ~32ms (1uF & 32k Ohms).  This voltage is converted by ADC0 of the Pico.
 
 The unused is set to an non-inverting amp of gain 1 to ground, [as per recommendation.]( https://www.ti.com/lit/ab/sboa204a/sboa204a.pdf)  Note that the op amp used here needs to be rated for a common-mode voltage at the bottom rail (here ground), but not the top rail, as there is headroom between the 3.3V maximum output and the 5V supply.  The [LM358 is rated for VCM down to V- but only to V+ - 2V.](https://www.ti.com/product/LM358#tech-docs)
 
@@ -127,4 +127,9 @@ The unused is set to an non-inverting amp of gain 1 to ground, [as per recommend
 # Future Ideas
 - Higher touch threshold for on than off
 - Low/High via separate contactors for each heating element
+- Optimize the PIO touch detection
+- Single Pin touch detection
 
+## Single Pin Optimized PIO touch detection
+
+Single pin sans resistor touch detection is very possible.  The Pico has pin pull down functionality (it’s on by default), and the IO directionally can be set dynamically via PINDIRS.  The state machine could be made tighter by both slowing down the clock rate such that the delay can be implemented by the SET instruction, and the SIDESET functionality can save a few instructions.
