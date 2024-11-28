@@ -5,3 +5,4 @@ build/*
 PCB/PCB-backups/*
 PCB/*.kicad_prl
 /PCB/production
+PCB/Proto/Proto-backups/*

@@ -11,7 +11,7 @@ I mostly think this project might be interesting to people because of a few new 
 
 This project served as a testbed for 3 new ideas that I wanted to try:
 - Status Logging and Timestamping though WiFi
-- Capacitive Touch Sensing via PIO State Machine
+- Capacitive Touch Sensing via a PIO State Machine
 - New Ideal Diode Peak Detector CT Interface
 
 ## Status Logging and Timestamping though WiFi
@@ -79,9 +79,9 @@ wrap()
 
 This code uses a PIO state machine to repeatedly charge and discharge the touch sensor detecting a change in capacitance via the time-to-charge.  The touch sensor is charged via an output pin connected through 1-megaohm resistor (R1 on schematic) giving a RC time delay that can be measured by an input pin connected directly to the touch sensor.
 
-The PIO state machine starts by getting the discharge time via an initial value written to the PIO state machine, that is moved to scratch register X.  This is necessary, as the PIO SET instruction is limited to 31, which is nowhere near the necessary value* (1,250,000).  The state machine then sets Y to all ones, sets the charge pin to "1", and counts down (via the "innterloop") until the jump pin goes low via RC discharge.  The jump escapes the loop (via jumping to "loopescape").  The Y value is outputted by moving Y to the input shift register (ISR) and pushing to the FIFO.  The push is nonblocking, to keep the detections going, but the FIFO will go stale if it's not read periodically.  To prepare for the next detection the charge pin is set to discharge "0", and then the discharge delay is performed, but copying the charge delay value stored in scratch register X, to Y, then looping via “chargeloop”.  At this point, we return to wrap_target(), which repeats everything (except loading the charge delay to scratch register X).
+The PIO state machine starts by getting the discharge time via an initial value written to the PIO state machine, that is moved to scratch register X.  This is necessary, as the PIO SET instruction is limited to 31, which is nowhere near the necessary value* (1,250,000).  The state machine then sets Y to all ones, sets the charge pin to "1", and counts down (via the "innerloop") until the jump pin goes low via RC discharge.  The jump escapes the loop (via jumping to "loopescape").  The Y value is outputted by moving Y to the input shift register (ISR) and pushing to the FIFO.  The push is nonblocking, to keep the detections going, but the FIFO will go stale if it's not read periodically.  To prepare for the next detection the charge pin is set to discharge "0", and then the discharge delay is performed, but preserving the charge delay value stored in scratch register X, to Y, then looping via “chargeloop”.  At this point, we return to wrap_target(), which repeats everything (except loading the charge delay to scratch register X).
 
-The user space code calibrates the baseline charge time with an IIR filter, and if a difference (here 4_000_000 cycles or 32 ms) in the charge time is detected a touch even is registered.  The touch detection is debounced via a time delay gate, as a single human-timescale touch event can trigger multiple PIO detections.
+The user space code calibrates the baseline charge time with an IIR filter, and if a difference (here 4_000_000 cycles or 32 ms) in the charge time is detected a touch event is registered.  The touch detection is debounced via a time delay gate, as a single human-timescale touch event can trigger multiple PIO detections.
 
 *Yes, I’m aware that large values in scratch registers can be set via the bit-reverse function of the MOV instruction, but these are a bit too large, as the smallest value is a SET of 16 (0b10000), bit reversed is 2^27, which is a delay of 1 second (2^27 / 125 MHz).
 
@@ -105,7 +105,7 @@ Here the python sets the discharge delay via sm.put().  An infinite loop pulls t
 
 ## New Ideal Diode Peak Detector CT Interface
 
-Interfacing to Current Transformers (CT) is a real pain; either one needs to bias the signal in the middle of the ADC range, and sample fast enough to capture the 60 Hz sine wave, extracting the RMS, or a diode envelope detector can be used.  The simple diode envelope detector simplifies the ADC reading, as the output signal is DC, but the diode turn-on voltage makes the transfer function non-linear when the signal from the CT is below the diode turn-on voltage, making the current measurement inaccurate at low current.
+Interfacing to Current Transformers (CTs) is a real pain; either one needs to bias the signal in the middle of the ADC range, and sample fast enough to capture the 60 Hz sine wave, extracting the RMS, or a diode envelope detector can be used.  The simple diode envelope detector simplifies the ADC reading, as the output signal is DC, but the diode turn-on voltage makes the transfer function non-linear when the signal from the CT is below the diode turn-on voltage, making the current measurement inaccurate at low current.
 
 Here, I’ve tried to make an ideal diode based peak detector (with gain) out of a non-inverting op amp driving though a diode.  Ideally this should both make the ADC readout much simpler and more accurate, as the output is DC, and the time constant can be set via a capacitor, and make the CT more accurate as the burden resistor can be sized optimally for the CT, with the op-amp gain used to optimally fill the ADC range from the typically lower voltage from a CT in the linear regime.
 
