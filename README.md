@@ -133,3 +133,7 @@ The unused is set to an non-inverting amp of gain 1 to ground, [as per recommend
 ## Single Pin Optimized PIO touch detection
 
 Single pin sans resistor touch detection is very possible.  The Pico has pin pull down functionality (it’s on by default), and the IO directionally can be set dynamically via PINDIRS.  The state machine could be made tighter by both slowing down the clock rate such that the delay can be implemented by the SET instruction, and the SIDESET functionality can save a few instructions.
+
+# Errata Discovered for time.ticks_diff()
+
+time.ticks_diff() doesn't seem to like intervals over a few days, the code was hanging.  I have changed the code to use a boolean to keep toggle the state, rather than rely on elapsed time, which seems to not work after a few days.

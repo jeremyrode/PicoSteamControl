@@ -29,6 +29,7 @@ flush_count = 4 #Zero means flush done
 baseline = 350_000 # Inital state for baseline IIR Value for touch detection (350_000, connected, 4_000 bare PCB)
 touch_threshold = 4_000_000 #Threshold above baseline for a touch (4_000_000, connected, 4_000 bare PCB)
 time_between_touches_ms = 1000 #Debounce time for a touch
+touch_armed = False
 current_raw = 0 #Inital State for current IIR
 DATA_IIR_CONST = 1000  # Filtering constant for the IIR filters
 time_between_status_ms = 1000 * 60 * 240 # How often to log status
@@ -90,9 +91,6 @@ def heat_off():
 def fill_open():
     fill.value(0) #Start Filling
 
-def is_fill_off():
-    return fill.value()
-
 def fill_closed():
     fill.value(1) #Stop Filling
 
@@ -143,7 +141,7 @@ def goCool(callingtimer):
     heat_off() # Stop Heat
     drain_closed() # Stop Drain
     flush_count = 4 #Queue up some flushing
-    statetimer.init(mode=machine.Timer.ONE_SHOT,period=1_800_000,callback=goFlush) # Cooling Timer 30 mins (1_800_000)
+    statetimer.init(mode=machine.Timer.ONE_SHOT,period=3_600_000,callback=goFlush) # Cooling Timer 60 mins (3_600_000)
     logWifi('Cool State')
     
 def goFill(callingtimer):
@@ -210,16 +208,19 @@ sm.put(1_250_000, 0)  #This sets Charging Delay and detection rate in SM clock c
 # Let us know were done booting
 # Start the Watchdog
 wdt = machine.WDT(timeout=5000)
-logWifi("Rebooted: v6 Long Delay, Watchdog")
+logWifi("Rebooted: v7 Reworked Debounce")
 wled.value(0)
 shower_led.value(0)
 last_touch = time.ticks_ms() # Limit immediate and back-to-back touch detections (debounce)
 last_status = last_touch
 while True: #Main loop
     curval = 4_294_967_295 - sm.get() #State Machine counts down from 2^32
-    if time.ticks_diff(time.ticks_ms(), last_touch) > time_between_touches_ms: #Not a multi-touch event 
+    # Ticks_diff doesn't work well for more than a day, so make a sticky armed state
+    if  touch_armed == False and time.ticks_diff(time.ticks_ms(), last_touch) > time_between_touches_ms: #Not a multi-touch event
+        touch_armed = True # Only let time arm us, as the above will be false over long time periods
+    if touch_armed:
         if curval > baseline + touch_threshold: #We have a touch event
-            last_touch = time.ticks_ms() #States are: off / filling / heat / cool / flush
+            last_touch = time.ticks_ms() #States are: off / filling / heat / cool / flush / quickdrain
             if state == 'off' or state == 'flush' or state == 'quickdrain':
                 goFill(0)
             elif state == 'heat':
@@ -231,6 +232,7 @@ while True: #Main loop
             else:
                 goCool(0)
                 logWifi("Uh Oh, we fell though the state if")
+            touch_armed = False;
             printTouchStatus()
             logWifi(f"Press at: {round(curval - baseline)}")
         else: #Only start taking button stats after the touch event has passed
