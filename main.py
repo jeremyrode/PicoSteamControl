@@ -32,12 +32,13 @@ time_between_touches_ms = 1000 #Debounce time for a touch
 touch_armed = False
 current_raw = 0 #Inital State for current IIR
 DATA_IIR_CONST = 1000  # Filtering constant for the IIR filters
-time_between_status_ms = 1000 * 60 * 240 # How often to log status
+time_between_status_ms = 1000 * 60 # How often to log status
+wifilog = False # If log to wifi
 max = 0
 # Logging Function
 def logWifi(logmessage):
     print('Log: ' + logmessage)
-    if not wlan.isconnected():
+    if not wlan.isconnected() and wifilog:
         print(f"Reconnecting to WiFi Network Name: {secrets.ssid}")
         try:
             wlan.active(True)
@@ -58,15 +59,15 @@ def logWifi(logmessage):
                 print('Failed to Connect')
                 return
         print('\nIP Address: ', wlan.ifconfig()[0])
-    try:
-        res = requests.post(secrets.url, data = logmessage)
-    except OSError: #Need to catch this or we stop
-        print("Log Failed, Post Error")
-    except Exception as e:
-        print(f"An unkown post error occurred: {e}")
-    else:
-        if res.text != 'OK':
-            print('Unexpected Post Response:', res.text)
+        try:
+            print("Trying to Post")
+            res = requests.post(secrets.url, data = logmessage)
+            print("Posted")
+        except: #Need to catch this or we stop
+            print("Log Failed, Post Error")
+        else:
+            if res.text != 'OK':
+                print('Unexpected Post Response:', res.text)
     
 # Helper functions to make code readable, and to add logging
 def logCurrent(callingtimer):
@@ -208,7 +209,7 @@ sm.put(1_250_000, 0)  #This sets Charging Delay and detection rate in SM clock c
 # Let us know were done booting
 # Start the Watchdog
 wdt = machine.WDT(timeout=5000)
-logWifi("Rebooted: v7 Reworked Debounce")
+logWifi("Rebooted: v9 WiFi Logging Disabled")
 wled.value(0)
 shower_led.value(0)
 last_touch = time.ticks_ms() # Limit immediate and back-to-back touch detections (debounce)
