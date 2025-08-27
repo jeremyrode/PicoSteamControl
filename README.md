@@ -121,6 +121,8 @@ Note that this is the schematic that I built on a proto board with parts on hand
 
 The CT burden resistor (R5) is set at 30 Ohms, calculated for good CT linearity.  The output voltage from the burdgen resistor goes to an op-amp (U2A). Here U2A with feedback around a diode (D1) forms an ideal diode, with feedback though a voltage divider formed by R4/R3, here with a voltage gain of 3.2X.  A 1uF capacitor (C1) stores the peak voltage from the diode (envelope detector), with a discharge time constant of ~32ms (1uF & 32k Ohms).  This voltage is converted by ADC0 of the Pico.
 
+Testing and simulations show this time constant isn't nearly enough by a couple of orders of magnitude, the proper calculation should be how much voltage sag the sampling capacitor has over the 1/60 Hz cycle and this calculation results in the resistor sum greater than a megaohm for 1 LSB of a 12-bit ADC.  Achieving the time constant with larger values can cause opamp instability and overshoot when the current changes.
+
 The unused is set to an non-inverting amp of gain 1 to ground, [as per recommendation.]( https://www.ti.com/lit/ab/sboa204a/sboa204a.pdf)  Note that the op amp used here needs to be rated for a common-mode voltage at the bottom rail (here ground), but not the top rail, as there is headroom between the 3.3V maximum output and the 5V supply.  The [LM358 is rated for VCM down to V- but only to V+ - 2V.](https://www.ti.com/product/LM358#tech-docs)
 
 
