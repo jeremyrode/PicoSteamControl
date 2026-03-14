@@ -1,7 +1,7 @@
 const http = require('http');
 const fs = require('fs');
 
-const LOG_FILE = '/home/pi/SteamControlLog.txt';
+const LOG_FILE = '/home/jprode/SteamControlLog.txt';
 const PORT = 65432;
 
 const logfile = fs.createWriteStream(LOG_FILE, {flags:'a'});
