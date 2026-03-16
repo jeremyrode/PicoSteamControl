@@ -26,52 +26,72 @@ currentLogTimer = machine.Timer()
 # Globals
 state = 'off' # off / filling / heat / cool / flush / quickdrain
 flush_count = 4 #Zero means flush done
+log_queue = [] # Queue for log messages from timers
 baseline = 350_000 # Inital state for baseline IIR Value for touch detection (350_000, connected, 4_000 bare PCB)
 touch_threshold = 4_000_000 #Threshold above baseline for a touch (4_000_000, connected, 4_000 bare PCB)
 time_between_touches_ms = 1000 #Debounce time for a touch
 touch_armed = False
 current_raw = 0 #Inital State for current IIR
 DATA_IIR_CONST = 1000  # Filtering constant for the IIR filters
-time_between_status_ms = 1000 * 60 # How often to log status
-wifilog = False # If log to wifi
-max = 0
+time_between_status_ms = 1000 * 60 * 60 * 12 # How often to log status
+wifilog = True # If log to wifi
+max_val = 0
+# Helper to add to queue and print
+def addLog(msg):
+    print('Log:', msg)
+    if len(log_queue) > 50:
+        log_queue.pop(0) # Keep queue capped to protect RAM
+    log_queue.append(msg)
+
 # Logging Function
-def logWifi(logmessage):
-    print('Log: ' + logmessage)
-    if not wlan.isconnected() and wifilog:
+def flushWifiLogs(logmessage):
+    if not wifilog:
+        return True # Clear queue if logging is disabled
+
+    if not wlan.isconnected():
         print(f"Reconnecting to WiFi Network Name: {secrets.ssid}")
         try:
             wlan.active(True)
             wlan.connect(secrets.ssid, secrets.password)
         except OSError as error:
             print(f'Connect error is {error}')
+            return False
         except Exception as e:
-            print(f"An unkown connect error occurred: {e}")
-            return
+            print(f"An unknown connect error occurred: {e}")
+            return False
         print('Waiting for connection...')
         counter = 0
         while not wlan.isconnected():
-            wdt.feed()
+            # wdt.feed()
             time.sleep(1)
             print(counter, '.', sep='', end='')
             counter += 1
             if counter > 20:
                 print('Failed to Connect')
-                return
+                return False
         print('\nIP Address: ', wlan.ifconfig()[0])
-        try:
-            print("Trying to Post")
-            res = requests.post(secrets.url, data = logmessage)
-            print("Posted")
-        except: #Need to catch this or we stop
-            print("Log Failed, Post Error")
+        
+    try:
+        print("Trying to Post")
+        api_key = getattr(secrets, 'STEAM_LOGGER_SECRET_KEY', 'default_key')
+        headers = {'x-api-key': api_key, 'Content-Type': 'text/plain'}
+        res = requests.post(secrets.url, data=logmessage, headers=headers)
+        print("Posted")
+    except: #Need to catch this or we stop
+        print("Log Failed, Post Error")
+        return False
+    else:
+        success = False
+        if res.text != 'OK':
+            print('Unexpected Post Response:', res.text)
         else:
-            if res.text != 'OK':
-                print('Unexpected Post Response:', res.text)
+            success = True
+        res.close()
+        return success
     
 # Helper functions to make code readable, and to add logging
 def logCurrent(callingtimer):
-    logWifi(f"C: {round(current_raw)}")
+    addLog(f"C: {round(current_raw)}")
 
 def ledOn():
     wled.value(1) #Turn on board LED
@@ -101,7 +121,7 @@ def drain_open():
 def drain_closed():
     drain.value(1) #Stop Draining
 
-def is_drain_open():
+def is_drain_closed():
     return drain.value()
 
 # State Functions
@@ -109,17 +129,17 @@ def goFlush(callingtimer):
     global flush_count, state
     state = 'flush'
     fill_open() #Start Filling
-    if is_drain_open(): #We are not draining
+    if not is_drain_closed(): #We are not draining
          drain_open() #Start Draining
-         logWifi(f"Flush Drain Cycle: {flush_count}")
+         addLog(f"Flush Drain Cycle: {flush_count}")
     else:
         drain_closed() #Stop Draining
         flush_count -= 1 # Done with this flush round
-        logWifi(f"Flush Fill Cycle: {flush_count}")
+        addLog(f"Flush Fill Cycle: {flush_count}")
     if flush_count > 0: #More flushes to go, recursive
         statetimer.init(mode=machine.Timer.ONE_SHOT,period=300_000,callback=goFlush) # Cycle the Flush 5 mins (300_000)
     else:
-        logWifi("Final Long Drain Cycle")
+        addLog("Final Long Drain Cycle")
         drain_open() #Start Draining
         fill_closed()   # Stop Filling
         statetimer.init(mode=machine.Timer.ONE_SHOT,period=3_600_000,callback=goOff) # Final Drain Cycle 60 mins (3_600_000)
@@ -132,7 +152,7 @@ def goHeat(callingtimer):
     heat_on() # Start Heat
     drain_closed() # Stop Drain
     statetimer.init(mode=machine.Timer.ONE_SHOT,period=900_000,callback=goCool) # Auto Off Timer 15 mins (900_000)
-    logWifi('Heat State')
+    addLog('Heat State')
 
 def goCool(callingtimer):
     global flush_count, state
@@ -143,7 +163,7 @@ def goCool(callingtimer):
     drain_closed() # Stop Drain
     flush_count = 4 #Queue up some flushing
     statetimer.init(mode=machine.Timer.ONE_SHOT,period=3_600_000,callback=goFlush) # Cooling Timer 60 mins (3_600_000)
-    logWifi('Cool State')
+    addLog('Cool State')
     
 def goFill(callingtimer):
     global state
@@ -153,7 +173,7 @@ def goFill(callingtimer):
     heat_off() # Stop Heat
     drain_closed() # Stop Drain
     statetimer.init(mode=machine.Timer.ONE_SHOT,period=20_000,callback=goHeat) # Fill Timer, 20s (20_000)
-    logWifi('Fill State')
+    addLog('Fill State')
    
 def goOff(callingtimer):
     global state
@@ -163,7 +183,7 @@ def goOff(callingtimer):
     heat_off() # Stop Heat
     drain_closed() # Stop Drain
     statetimer.deinit()
-    logWifi('Off State')
+    addLog('Off State')
 
 def goQuickDrain(callingtimer):
     global state
@@ -173,12 +193,12 @@ def goQuickDrain(callingtimer):
     heat_off() # Stop Heat
     drain_open() #Start Draining
     statetimer.init(mode=machine.Timer.ONE_SHOT,period=600_000,callback=goOff) # Final Drain Cycle 10 mins (600_000)
-    logWifi('Quick Drain')
+    addLog('Quick Drain')
     
 def printTouchStatus():
-    global max, baseline, last_status
-    logWifi(f"Base: {round(baseline)} Max:  {round(max - baseline)}")
-    max = 0
+    global max_val, baseline, last_status
+    addLog(f"Base: {round(baseline)} Max:  {round(max_val - baseline)}")
+    max_val = 0
     last_status = time.ticks_ms()
 
 # Touch Sensor PIO State Machine
@@ -208,8 +228,8 @@ sm.active(1)
 sm.put(1_250_000, 0)  #This sets Charging Delay and detection rate in SM clock cycles (10 ms)
 # Let us know were done booting
 # Start the Watchdog
-wdt = machine.WDT(timeout=5000)
-logWifi("Rebooted: v9 WiFi Logging Disabled")
+# wdt = machine.WDT(timeout=8000)
+addLog("Rebooted: v10 WiFi Logging Enabled")
 wled.value(0)
 shower_led.value(0)
 last_touch = time.ticks_ms() # Limit immediate and back-to-back touch detections (debounce)
@@ -232,17 +252,24 @@ while True: #Main loop
                 goHeat(0)
             else:
                 goCool(0)
-                logWifi("Uh Oh, we fell though the state if")
+                addLog("Uh Oh, we fell though the state if")
             touch_armed = False;
             printTouchStatus()
-            logWifi(f"Press at: {round(curval - baseline)}")
+            addLog(f"Press at: {round(curval - baseline)}")
         else: #Only start taking button stats after the touch event has passed
             baseline = curval / DATA_IIR_CONST + baseline * (DATA_IIR_CONST - 1) / DATA_IIR_CONST #Take Baseline Stats
-            if curval > max: # Take some stats for logging
-                max = curval
+            if curval > max_val: # Take some stats for logging
+                max_val = curval
     # Do these things always
     current_raw  = adc.read_u16() / DATA_IIR_CONST + current_raw * (DATA_IIR_CONST - 1) / DATA_IIR_CONST
     #print status on an interval
     if time.ticks_diff(time.ticks_ms(), last_status) > time_between_status_ms:
         printTouchStatus()       
-    wdt.feed()
+    
+    # Process the log queue in the main loop instead of timers
+    if log_queue:
+        batched_messages = '\n'.join(log_queue)
+        if flushWifiLogs(batched_messages):
+            log_queue.clear()
+
+    # wdt.feed()
