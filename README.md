@@ -48,6 +48,7 @@ const server = http.createServer((req, res) => {
   }
 });
 ```
+Note that this code was upgraded into batch mode via Gemini.
 
 ## Capacitive Touch Sensing via PIO State Machine
 
