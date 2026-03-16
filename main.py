@@ -33,7 +33,7 @@ time_between_touches_ms = 1000 #Debounce time for a touch
 touch_armed = False
 current_raw = 0 #Inital State for current IIR
 DATA_IIR_CONST = 1000  # Filtering constant for the IIR filters
-time_between_status_ms = 1000 * 60 # How often to log status
+time_between_status_ms = 1000 * 60 * 60 * 12 # How often to log status
 wifilog = True # If log to wifi
 max_val = 0
 # Helper to add to queue and print
@@ -41,7 +41,7 @@ def addLog(msg):
     print('Log:', msg)
     if len(log_queue) > 50:
         log_queue.pop(0) # Keep queue capped to protect RAM
-    addLog(msg)
+    log_queue.append(msg)
 
 # Logging Function
 def flushWifiLogs(logmessage):
@@ -62,7 +62,7 @@ def flushWifiLogs(logmessage):
         print('Waiting for connection...')
         counter = 0
         while not wlan.isconnected():
-            wdt.feed()
+            # wdt.feed()
             time.sleep(1)
             print(counter, '.', sep='', end='')
             counter += 1
@@ -73,7 +73,7 @@ def flushWifiLogs(logmessage):
         
     try:
         print("Trying to Post")
-        api_key = getattr(secrets, 'api_key', 'STEAM_LOGGER_SECRET_KEY')
+        api_key = getattr(secrets, 'STEAM_LOGGER_SECRET_KEY', 'default_key')
         headers = {'x-api-key': api_key, 'Content-Type': 'text/plain'}
         res = requests.post(secrets.url, data=logmessage, headers=headers)
         print("Posted")
@@ -228,7 +228,7 @@ sm.active(1)
 sm.put(1_250_000, 0)  #This sets Charging Delay and detection rate in SM clock cycles (10 ms)
 # Let us know were done booting
 # Start the Watchdog
-wdt = machine.WDT(timeout=8000)
+# wdt = machine.WDT(timeout=8000)
 addLog("Rebooted: v10 WiFi Logging Enabled")
 wled.value(0)
 shower_led.value(0)
@@ -272,4 +272,4 @@ while True: #Main loop
         if flushWifiLogs(batched_messages):
             log_queue.clear()
 
-    wdt.feed()
+    # wdt.feed()

@@ -2,7 +2,7 @@
 const http = require('http');
 const fs = require('fs');
 
-const LOG_FILE = '/home/pi/SteamControlLog.txt';
+const LOG_FILE = '/home/jprode/SteamControlLog.txt';
 const PORT = 65432;
 const API_KEY = 'STEAM_LOGGER_SECRET_KEY'; // Replace with a secure key in production
 
@@ -41,12 +41,13 @@ const server = http.createServer((req, res) => {
     if (res.writableEnded) return; // Ignore if response already destroyed
     let curDate = new Date();
     let dateStr = curDate.toLocaleString();
-    
+    let ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+
     // Process batch messages separated by newline
     let messages = data.split('\n').filter(msg => msg.trim() !== '');
-    
+
     messages.forEach(msg => {
-      let logLine = `${dateStr} ${msg}`;
+      let logLine = `${dateStr} [${ip}] ${msg}`;
       console.log(logLine);
       logfile.write(logLine + '\n');
     });
@@ -58,5 +59,6 @@ const server = http.createServer((req, res) => {
 
 server.listen(PORT, () => {
   console.log('Server running on port ' + PORT);
+  logfile.write('Started Server at ' + new Date().toLocaleString() + '\n');
 });
 
